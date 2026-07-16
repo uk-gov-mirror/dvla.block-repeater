@@ -27,9 +27,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bump', '~> 0.6'
-  spec.add_development_dependency 'bundler', '~> 2.4.0'
+  spec.add_development_dependency 'bundler', '>= 2.4'
+  spec.add_development_dependency 'ostruct'
   spec.add_development_dependency 'pry'
-  spec.add_development_dependency 'rake', '~> 10.0'
+  spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.8'
   spec.add_development_dependency 'rubocop'
 end
