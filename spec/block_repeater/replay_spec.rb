@@ -12,9 +12,9 @@ RSpec.describe BlockRepeater::Replay do
     it 'retries the block when a configured exception is raised' do
       attempts = 0
 
-      result = replay(times: 3, delay: 0.01, exceptions: [RuntimeError]) do
+      result = replay(exceptions: [RuntimeError], times: 3, delay: 0.01) do
         attempts += 1
-        raise RuntimeError, 'transient error' if attempts < 3
+        raise 'transient error' if attempts < 3
 
         'recovered'
       end
@@ -25,15 +25,15 @@ RSpec.describe BlockRepeater::Replay do
 
     it 'raises the exception if still failing on the final attempt' do
       expect do
-        replay(times: 3, delay: 0.01, exceptions: [RuntimeError]) do
-          raise RuntimeError, 'persistent error'
+        replay(exceptions: [RuntimeError], times: 3, delay: 0.01) do
+          raise 'persistent error'
         end
       end.to raise_error(RuntimeError, 'persistent error')
     end
 
     it 'does not catch exceptions not in the configured list' do
       expect do
-        replay(times: 3, delay: 0.01, exceptions: [RuntimeError]) do
+        replay(exceptions: [RuntimeError], times: 3, delay: 0.01) do
           raise IOError, 'unexpected'
         end
       end.to raise_error(IOError, 'unexpected')
@@ -44,9 +44,9 @@ RSpec.describe BlockRepeater::Replay do
       attempts = 0
       refresh_proc = -> { refresh_count += 1 }
 
-      replay(times: 3, delay: 0.01, exceptions: [RuntimeError], refresh: refresh_proc) do
+      replay(exceptions: [RuntimeError], times: 3, delay: 0.01, refresh: refresh_proc) do
         attempts += 1
-        raise RuntimeError, 'error' if attempts < 3
+        raise 'error' if attempts < 3
 
         'done'
       end
@@ -59,8 +59,8 @@ RSpec.describe BlockRepeater::Replay do
       refresh_proc = -> { refresh_count += 1 }
 
       expect do
-        replay(times: 3, delay: 0.01, exceptions: [RuntimeError], refresh: refresh_proc) do
-          raise RuntimeError, 'error'
+        replay(exceptions: [RuntimeError], times: 3, delay: 0.01, refresh: refresh_proc) do
+          raise 'error'
         end
       end.to raise_error(RuntimeError)
 
@@ -70,9 +70,9 @@ RSpec.describe BlockRepeater::Replay do
     it 'does not attempt refresh when refresh is nil' do
       attempts = 0
 
-      result = replay(times: 3, delay: 0.01, exceptions: [RuntimeError]) do
+      result = replay(exceptions: [RuntimeError], times: 3, delay: 0.01) do
         attempts += 1
-        raise RuntimeError, 'error' if attempts < 2
+        raise 'error' if attempts < 2
 
         'ok'
       end
@@ -88,8 +88,8 @@ RSpec.describe BlockRepeater::Replay do
       end
 
       expect do
-        replay(times: 2, delay: 0.01, exceptions: [RuntimeError], logger: test_logger) do
-          raise RuntimeError, 'something broke'
+        replay(exceptions: [RuntimeError], times: 2, delay: 0.01, logger: test_logger) do
+          raise 'something broke'
         end
       end.to raise_error(RuntimeError)
 
@@ -99,9 +99,9 @@ RSpec.describe BlockRepeater::Replay do
     it 'does not raise when logger is nil' do
       attempts = 0
 
-      result = replay(times: 2, delay: 0.01, exceptions: [RuntimeError], logger: nil) do
+      result = replay(exceptions: [RuntimeError], times: 2, delay: 0.01, logger: nil) do
         attempts += 1
-        raise RuntimeError, 'error' if attempts < 2
+        raise 'error' if attempts < 2
 
         'ok'
       end
