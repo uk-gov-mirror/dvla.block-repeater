@@ -17,27 +17,21 @@ module BlockRepeater
     # @param logger [#error, nil] Logger for error messages; nil to silence (default: nil)
     # @param &block - The block of code to retry
     # @return The result of the block
-    def replay(times: 3, delay: 0.5, exceptions: [], refresh: nil, logger: nil, &block)
+    def replay(times: 3, delay: 0.5, exceptions:, refresh: nil, logger: nil, &block)
       raise ArgumentError, 'replay requires a block' unless block
 
       attempt = 0
 
-      repeater = repeat(times: times, delay: delay, &block)
+      repeat(times: times, delay: delay, &block).catch(exceptions: exceptions, behaviour: :continue) do |e|
+        attempt += 1
+        logger&.error { e.message }
 
-      if exceptions.any?
-        repeater = repeater.catch(exceptions: exceptions, behaviour: :continue) do |e|
-          attempt += 1
-          logger&.error { e.message }
-
-          if attempt >= times
-            raise(e)
-          else
-            refresh&.call
-          end
+        if attempt >= times
+          raise(e)
+        else
+          refresh&.call
         end
-      end
-
-      repeater.until do |result|
+      end.until do |result|
         !result.is_a?(Exception)
       end
     end

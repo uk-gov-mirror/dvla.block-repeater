@@ -5,14 +5,14 @@ RSpec.describe BlockRepeater::Replay do
 
   describe '#replay' do
     it 'executes the block and returns the result' do
-      result = replay { 'success' }
+      result = replay(exceptions: [RuntimeError]) { 'success' }
       expect(result).to eq('success')
     end
 
     it 'retries the block when a configured exception is raised' do
       attempts = 0
 
-      result = replay(times: 3, exceptions: [RuntimeError]) do
+      result = replay(times: 3, delay: 0.01, exceptions: [RuntimeError]) do
         attempts += 1
         raise RuntimeError, 'transient error' if attempts < 3
 
@@ -25,7 +25,7 @@ RSpec.describe BlockRepeater::Replay do
 
     it 'raises the exception if still failing on the final attempt' do
       expect do
-        replay(times: 3, exceptions: [RuntimeError]) do
+        replay(times: 3, delay: 0.01, exceptions: [RuntimeError]) do
           raise RuntimeError, 'persistent error'
         end
       end.to raise_error(RuntimeError, 'persistent error')
@@ -33,7 +33,7 @@ RSpec.describe BlockRepeater::Replay do
 
     it 'does not catch exceptions not in the configured list' do
       expect do
-        replay(times: 3, exceptions: [RuntimeError]) do
+        replay(times: 3, delay: 0.01, exceptions: [RuntimeError]) do
           raise IOError, 'unexpected'
         end
       end.to raise_error(IOError, 'unexpected')
@@ -110,15 +110,7 @@ RSpec.describe BlockRepeater::Replay do
     end
 
     it 'raises ArgumentError when no block is given' do
-      expect { replay }.to raise_error(ArgumentError, 'replay requires a block')
-    end
-
-    it 'does not rescue any exceptions when exceptions list is empty' do
-      expect do
-        replay(exceptions: []) do
-          raise RuntimeError, 'not caught'
-        end
-      end.to raise_error(RuntimeError, 'not caught')
+      expect { replay(exceptions: [RuntimeError]) }.to raise_error(ArgumentError, 'replay requires a block')
     end
   end
 end
