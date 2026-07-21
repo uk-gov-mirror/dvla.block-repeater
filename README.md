@@ -115,6 +115,43 @@ Then an RSpec expectation can be used in the block for the `until` method. The e
     expect(result.count).to be_positive, raise 'No result returned from databased'
   end
 ```
+### Replay method
+The `replay` method provides a retry-with-refresh mechanism for UI actions that may fail due to transient errors. It is designed for use with browser automation tools like Capybara.
+
+```ruby
+replay(exceptions: [Capybara::ElementNotFound], refresh: -> { page.refresh }) do
+  find('#submit-button').click
+end
+```
+
+`replay` takes five parameters:
+- `times:` maximum retry attempts (defaults to 3)
+- `delay:` seconds between retries (defaults to 0.5)
+- `exceptions:` array of exception types to catch and retry on (defaults to [])
+- `refresh:` a callable (Proc/lambda) to execute between retries for page refresh (defaults to nil)
+- `logger:` any object responding to `#error` for error messages, or nil to silence logging (defaults to nil)
+
+The block is executed and if a configured exception is raised, the error is logged, the refresh callable is invoked (if provided), and the block is retried. If the exception persists after all attempts, it is re-raised. The refresh is not called on the final attempt.
+
+A typical setup with Capybara and locale handling:
+```ruby
+UI_ERRORS = [Capybara::ElementNotFound, Selenium::WebDriver::Error::ElementClickInterceptedError]
+
+replay(exceptions: UI_ERRORS, refresh: -> { visit("#{current_path}?locale=#{I18n.locale}") }) do
+  click_link_or_button('Continue')
+end
+```
+
+To use a custom logger:
+```ruby
+replay(exceptions: UI_ERRORS, logger: Rails.logger) { perform_action }
+```
+
+To silence logging:
+```ruby
+replay(exceptions: UI_ERRORS, logger: nil) { perform_action }
+```
+
 ### Non predefined condition methods
 Very simple conditions can be utilised without using a block. This expects either one or two method names which will be called against the result of repeating the main block.
 The required format is `until_<method name>` or `until_<method name>_becomes_<method name>`.

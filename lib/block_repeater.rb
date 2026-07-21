@@ -2,6 +2,7 @@
 
 require 'block_repeater/version'
 require 'block_repeater/repeatable'
+require 'block_repeater/replay'
 require 'block_repeater/repeater'
 
 ##
@@ -11,4 +12,5 @@ require 'block_repeater/repeater'
 #
 module BlockRepeater
   include Repeatable
+  include Replay
 end
